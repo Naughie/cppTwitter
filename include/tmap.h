@@ -3,19 +3,22 @@
 
 #include "constants.h"
 #include "tstring.h"
+#include<map>
 
 namespace twitter
 {
+
+using mapstring = std::map<string::iterator, string::iterator>;
 
 class map
 {
   public:
     map();
-    map(string *str, size_t new_size);
+    map(string *str);
     ~map();
   private:
     string *body;
-    size_t size;
+    mapstring pairs;
 };
 
 }

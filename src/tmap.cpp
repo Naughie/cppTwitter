@@ -5,12 +5,12 @@ namespace twitter
 {
 
 map::map()
-  : body(new string(BUFSIZE)), size(0)
+  : body(new string(BUFSIZE)), pairs()
 {
 }
 
-map::map(string *str, size_t new_size)
-  :  body(str), size(new_size)
+map::map(string *str)
+  :  body(str), pairs()
 {
 }
 
