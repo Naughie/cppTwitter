@@ -55,7 +55,7 @@ template string &string::operator<<(string &str);
 
 string &string::operator<<(char c)
 {
-  *(body + len++) = c;
+  push_char(c);
   return *this;
 }
 
@@ -84,14 +84,44 @@ string &string::operator<<(unsigned long n)
 }
 
 template<typename T>
+void string::encode(EncodeMethod enc, T *from, string &to, char last)
+{
+  switch (enc) {
+    case URL_ENCODE:
+      url_encode(from, to, last);
+      break;
+    case BASE64_ENCODE:
+      base64_encode(from, to, last);
+      break;
+    default:
+      break;
+  }
+}
+
+template<typename T>
 void string::encode(EncodeMethod enc, T *from, string &to)
 {
   switch (enc) {
     case URL_ENCODE:
-      url_encode(from, to);
+      url_encode(from, to, '\0');
       break;
     case BASE64_ENCODE:
-      base64_encode(from, to);
+      base64_encode(from, to, '\0');
+      break;
+    default:
+      break;
+  }
+}
+
+template<typename T>
+void string::encode(EncodeMethod enc, T &from, string &to, char last)
+{
+  switch (enc) {
+    case URL_ENCODE:
+      url_encode(from, to, last);
+      break;
+    case BASE64_ENCODE:
+      base64_encode(from, to, last);
       break;
     default:
       break;
@@ -103,14 +133,19 @@ void string::encode(EncodeMethod enc, T &from, string &to)
 {
   switch (enc) {
     case URL_ENCODE:
-      url_encode(from, to);
+      url_encode(from, to, '\0');
       break;
     case BASE64_ENCODE:
-      base64_encode(from, to);
+      base64_encode(from, to, '\0');
       break;
     default:
       break;
   }
+}
+
+inline void string::push_char(char c)
+{
+  *(body + len++) = c;
 }
 
 void string::push_back(char *str)
@@ -145,23 +180,68 @@ void string::push_back(T n)
   len += 20 - i;
 }
 
+inline bool string::inv_under_url_encode(char c)
+{
+  return (c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a) || c == 0x2d || c == 0x2e || c == 0x5f || c == 0x7e;
+}
+
 template<typename T>
-void string::url_encode(T *from, string &to)
+void string::url_encode(T *from, string &to, char last)
+{
+  T *it = from;
+  if (inv_under_url_encode(*it))
+    to.push_char(*it);
+  else {
+    T f = (*it & 0xf0) >> 4;
+    T s = *it & 0x0f;
+    T ff = (f + 0x30) + 0x07 * (f > 0x09);
+    T ss = (s + 0x30) + 0x07 * (s > 0x09);
+    T u[] = {'%', ff, ss, '\0'};
+    to.push_back(u);
+  }
+  ++it;
+}
+
+template<typename T>
+void string::url_encode(T &from, string &to, char last)
 {
 }
 
 template<typename T>
-void string::url_encode(T &from, string &to)
+void string::base64_encode(T *from, string &to, char last)
 {
+  T *it = from;
+  int ri = 1;
+  while(*++it != last)
+    ++ri;
+  ri = (ri - 1) / 3 + 1;
+  it = from;
+  for (int i = 0; i < ri; i++) {
+    for (int j = 0; j < 4; j++) {
+      if (ri >= i * 3 + j) {
+        char x = BASE64_TABLE[((unsigned char)it[j - 1] << (6 - 2 * j) | (unsigned char)it[j] >> (2 * j + 2)) & 0x3f];
+        switch (x) {
+          case '+':
+            to.push_back("%2B");
+            break;
+          case '/':
+            to.push_back("%2F");
+            break;
+          case '=':
+            to.push_back("%3D");
+            break;
+          default:
+            to.push_back(x);
+            break;
+        }
+      } else
+        to.push_back("%3D");
+    }
+  }
 }
 
 template<typename T>
-void string::base64_encode(T *from, string &to)
-{
-}
-
-template<typename T>
-void string::base64_encode(T &from, string &to)
+void string::base64_encode(T &from, string &to, char last)
 {
 }
 
