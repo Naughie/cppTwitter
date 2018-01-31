@@ -19,19 +19,25 @@ string::~string()
   delete [] body;
 }
 
-inline char *string::begin()
+string::iterator string::begin()
 {
-  return body;
+  return string::iterator(body);
 }
 
-inline char *string::end()
+string::iterator string::end()
 {
-  return body + size();
+  return string::iterator(body + size());
 }
 
 inline size_t string::size()
 {
   return len;
+}
+
+void string::print()
+{
+  for (auto &it : *this)
+    printf("%c", it);
 }
 
 template<typename T>
@@ -41,8 +47,8 @@ string &string::operator<<(T *str)
   return *this;
 }
 
-template string &string::operator<<(char *str);
-template string &string::operator<<(const char *str);
+template string &string::operator<<(char*);
+template string &string::operator<<(const char*);
 
 template<typename T>
 string &string::operator<<(T &str)
@@ -51,7 +57,7 @@ string &string::operator<<(T &str)
   return *this;
 }
 
-template string &string::operator<<(string &str);
+template string &string::operator<<(string&);
 
 string &string::operator<<(char c)
 {
@@ -113,6 +119,11 @@ void string::encode(EncodeMethod enc, T *from, string &to)
   }
 }
 
+template void string::encode(EncodeMethod, char*, string&, char);
+template void string::encode(EncodeMethod, const char*, string&, char);
+template void string::encode(EncodeMethod, char*, string&);
+template void string::encode(EncodeMethod, const char*, string&);
+
 template<typename T>
 void string::encode(EncodeMethod enc, T &from, string &to, char last)
 {
@@ -143,6 +154,9 @@ void string::encode(EncodeMethod enc, T &from, string &to)
   }
 }
 
+template void string::encode(EncodeMethod, string&, string&, char);
+template void string::encode(EncodeMethod, string&, string&);
+
 inline void string::push_char(char c)
 {
   *(body + len++) = c;
@@ -151,20 +165,20 @@ inline void string::push_char(char c)
 void string::push_back(char *str)
 {
   int size = strlen(str);
-  memcpy(end(), str, size);
+  memcpy(body + len, str, size);
   len += size;
 }
 
 void string::push_back(const char *str)
 {
   int size = strlen(str);
-  memcpy(end(), str, size);
+  memcpy(body + len, str, size);
   len += size;
 }
 
 void string::push_back(string &str)
 {
-  memcpy(end(), str.begin(), str.size());
+  memcpy(body + len, str.body, str.size());
   len += str.size();
 }
 
@@ -176,7 +190,7 @@ void string::push_back(T n)
   int i = 19;
   while (n /= 10)
     m[--i] = 0x30 + n % 10;
-  memcpy(end(), m + i, 20 - i);
+  memcpy(body + len, m + i, 20 - i);
   len += 20 - i;
 }
 
@@ -188,18 +202,17 @@ inline bool string::inv_under_url_encode(char c)
 template<typename T>
 void string::url_encode(T *from, string &to, char last)
 {
-  T *it = from;
-  if (inv_under_url_encode(*it))
-    to.push_char(*it);
-  else {
-    T f = (*it & 0xf0) >> 4;
-    T s = *it & 0x0f;
-    T ff = (f + 0x30) + 0x07 * (f > 0x09);
-    T ss = (s + 0x30) + 0x07 * (s > 0x09);
-    T u[] = {'%', ff, ss, '\0'};
-    to.push_back(u);
-  }
-  ++it;
+  for (auto it = from; *it != last; ++it)
+    if (inv_under_url_encode(*it))
+      to.push_char(*it);
+    else {
+      T f = (*it & 0xf0) >> 4;
+      T s = *it & 0x0f;
+      T ff = (f + 0x30) + 0x07 * (f > 0x09);
+      T ss = (s + 0x30) + 0x07 * (s > 0x09);
+      T u[] = {'%', ff, ss, '\0'};
+      to.push_back(u);
+    }
 }
 
 template<typename T>
@@ -243,6 +256,99 @@ void string::base64_encode(T *from, string &to, char last)
 template<typename T>
 void string::base64_encode(T &from, string &to, char last)
 {
+}
+
+string::iterator::iterator()
+  : ptr()
+{
+}
+
+string::iterator::iterator(char *s)
+  : ptr(s)
+{
+}
+
+string::iterator &string::iterator::operator=(const string::iterator &that)
+{
+  ptr = that.ptr;
+  return *this;
+}
+
+string::iterator::~iterator()
+{
+}
+
+template<typename T>
+string::iterator string::iterator::operator+(T n)
+{
+  return string::iterator(ptr + n);
+}
+
+template<typename T>
+string::iterator string::iterator::operator-(T n)
+{
+  return string::iterator(ptr - n);
+}
+
+string::iterator string::iterator::operator++(int)
+{
+  auto before = *this;
+  ++ptr;
+  return before;
+}
+
+string::iterator string::iterator::operator--(int)
+{
+  auto before = *this;
+  --ptr;
+  return before;
+}
+
+string::iterator &string::iterator::operator++()
+{
+  ++ptr;
+  return *this;
+}
+
+string::iterator &string::iterator::operator--()
+{
+  --ptr;
+  return *this;
+}
+
+char &string::iterator::operator*() const noexcept
+{
+  return *ptr;
+}
+
+bool string::iterator::operator<(string::iterator &that)
+{
+  return strcmp(ptr, that.ptr) < 0;
+}
+
+bool string::iterator::operator<=(string::iterator &that)
+{
+  return strcmp(ptr, that.ptr) <= 0;
+}
+
+bool string::iterator::operator>(string::iterator &that)
+{
+  return strcmp(ptr, that.ptr) > 0;
+}
+
+bool string::iterator::operator>=(string::iterator &that)
+{
+  return strcmp(ptr, that.ptr) >= 0;
+}
+
+bool string::iterator::operator==(string::iterator &that)
+{
+  return strcmp(ptr, that.ptr) == 0;
+}
+
+bool string::iterator::operator!=(string::iterator &that)
+{
+  return ptr != that.ptr;
 }
 
 }

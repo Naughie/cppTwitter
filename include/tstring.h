@@ -2,6 +2,8 @@
 #define TWITTER_TSTRING_H
 
 #include "constants.h"
+#include<cstdio>
+#include<cstring>
 #include<random>
 #include<utility>
 #include<openssl/hmac.h>
@@ -14,12 +16,14 @@ class map;
 class string
 {
   public:
+    class iterator;
     string();
     string(unsigned int buf_size);
     ~string();
-    char *begin();
-    char *end();
+    iterator begin();
+    iterator end();
     size_t size();
+    void print();
     template<typename T>
     string &operator<<(T *str);
     template<typename T>
@@ -37,6 +41,31 @@ class string
     static void encode(EncodeMethod enc, T &from, string &to, char last);
     template<typename T>
     static void encode(EncodeMethod enc, T &from, string &to);
+    class iterator
+    {
+      public:
+        iterator();
+        iterator(char *s);
+        iterator &operator=(const iterator &that);
+        ~iterator();
+        template<typename T>
+        iterator operator+(T n);
+        template<typename T>
+        iterator operator-(T n);
+        iterator operator++(int);
+        iterator operator--(int);
+        iterator &operator++();
+        iterator &operator--();
+        char &operator*() const noexcept;
+        bool operator<(iterator &that);
+        bool operator<=(iterator &that);
+        bool operator>(iterator &that);
+        bool operator>=(iterator &that);
+        bool operator==(iterator &that);
+        bool operator!=(iterator &that);
+      private:
+        char *ptr;
+    };
   private:
     char *body;
     size_t len;
