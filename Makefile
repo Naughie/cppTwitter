@@ -8,11 +8,13 @@ SRCDIR = ./src
 SOURCES = $(wildcard $(SRCDIR)/*.cpp)
 OBJDIR = ./obj
 OBJECTS = $(addprefix $(OBJDIR)/, $(notdir $(SOURCES:.cpp=.o)))
+INCDIR = ./include
+HEADERS = $(wildcard $(INCDIR)/*.h)
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(LDLIBS) -o $@ $^
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
 
 all: clean $(TARGET)
