@@ -6,8 +6,7 @@ using namespace twitter;
 int main(int argc, char const* argv[])
 {
   string s;
-  s << "atankb";
+  s << encoder::base64_encode<const char>("ankbaakbtsbc.a", '\0');
   s.print();
-  printf("\n%ld\n", sizeof(bool));
   return 0;
 }

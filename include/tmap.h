@@ -2,13 +2,14 @@
 #define TWITTER_TMAP_H
 
 #include "constants.h"
+#include "encoder.h"
 #include "tstring.h"
 #include<map>
 
 namespace twitter
 {
 
-using mapstring = std::map<string::iterator, string::iterator>;
+using smap = std::map<string::iterator, string::iterator>;
 
 class map
 {
@@ -18,7 +19,7 @@ class map
     ~map();
   private:
     string *body;
-    mapstring pairs;
+    smap pairs;
 };
 
 }
