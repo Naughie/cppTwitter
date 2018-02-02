@@ -1,5 +1,6 @@
 #include "tstring.h"
 #include "tmap.h"
+#include "encoder.h"
 
 namespace twitter
 {
@@ -36,7 +37,7 @@ inline size_t string::size()
 
 void string::print()
 {
-  for (auto &it : *this)
+  for (const auto &it : *this)
     printf("%c", it);
 }
 
@@ -52,6 +53,13 @@ template string &string::operator<<(const char*);
 
 template<typename T>
 string &string::operator<<(T &str)
+{
+  push_back(str);
+  return *this;
+}
+
+template<typename T>
+string &string::operator<<(const T &str)
 {
   push_back(str);
   return *this;
@@ -89,73 +97,15 @@ string &string::operator<<(unsigned long n)
   return *this;
 }
 
-template<typename T>
-void string::encode(EncodeMethod enc, T *from, string &to, char last)
+template<typename T, template<typename> class F>
+string &string::operator<<(F<T> functor)
 {
-  switch (enc) {
-    case URL_ENCODE:
-      url_encode(from, to, last);
-      break;
-    case BASE64_ENCODE:
-      base64_encode(from, to, last);
-      break;
-    default:
-      break;
-  }
+  encode(functor);
+  return *this;
 }
 
-template<typename T>
-void string::encode(EncodeMethod enc, T *from, string &to)
-{
-  switch (enc) {
-    case URL_ENCODE:
-      url_encode(from, to, '\0');
-      break;
-    case BASE64_ENCODE:
-      base64_encode(from, to, '\0');
-      break;
-    default:
-      break;
-  }
-}
-
-template void string::encode(EncodeMethod, char*, string&, char);
-template void string::encode(EncodeMethod, const char*, string&, char);
-template void string::encode(EncodeMethod, char*, string&);
-template void string::encode(EncodeMethod, const char*, string&);
-
-template<typename T>
-void string::encode(EncodeMethod enc, T &from, string &to, char last)
-{
-  switch (enc) {
-    case URL_ENCODE:
-      url_encode(from, to, last);
-      break;
-    case BASE64_ENCODE:
-      base64_encode(from, to, last);
-      break;
-    default:
-      break;
-  }
-}
-
-template<typename T>
-void string::encode(EncodeMethod enc, T &from, string &to)
-{
-  switch (enc) {
-    case URL_ENCODE:
-      url_encode(from, to, '\0');
-      break;
-    case BASE64_ENCODE:
-      base64_encode(from, to, '\0');
-      break;
-    default:
-      break;
-  }
-}
-
-template void string::encode(EncodeMethod, string&, string&, char);
-template void string::encode(EncodeMethod, string&, string&);
+template string &string::operator<<<const char, encoder::url_encode>(encoder::url_encode<const char>);
+template string &string::operator<<<const char, encoder::base64_encode>(encoder::base64_encode<const char>);
 
 inline void string::push_char(char c)
 {
@@ -182,6 +132,12 @@ void string::push_back(string &str)
   len += str.size();
 }
 
+template<typename T, template<typename> class F>
+void string::encode(F<T> &functor)
+{
+  functor(*this);
+}
+
 template<typename T>
 void string::push_back(T n)
 {
@@ -194,69 +150,59 @@ void string::push_back(T n)
   len += 20 - i;
 }
 
-inline bool string::inv_under_url_encode(char c)
-{
-  return (c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a) || c == 0x2d || c == 0x2e || c == 0x5f || c == 0x7e;
-}
-
-template<typename T>
-void string::url_encode(T *from, string &to, char last)
-{
-  for (auto it = from; *it != last; ++it)
-    if (inv_under_url_encode(*it))
-      to.push_char(*it);
-    else {
-      T f = (*it & 0xf0) >> 4;
-      T s = *it & 0x0f;
-      T ff = (f + 0x30) + 0x07 * (f > 0x09);
-      T ss = (s + 0x30) + 0x07 * (s > 0x09);
-      T u[] = {'%', ff, ss, '\0'};
-      to.push_back(u);
-    }
-}
-
-template<typename T>
-void string::url_encode(T &from, string &to, char last)
-{
-}
-
-template<typename T>
-void string::base64_encode(T *from, string &to, char last)
-{
-  T *it = from;
-  int ri = 1;
-  while(*++it != last)
-    ++ri;
-  ri = (ri - 1) / 3 + 1;
-  it = from;
-  for (int i = 0; i < ri; i++) {
-    for (int j = 0; j < 4; j++) {
-      if (ri >= i * 3 + j) {
-        char x = BASE64_TABLE[((unsigned char)it[j - 1] << (6 - 2 * j) | (unsigned char)it[j] >> (2 * j + 2)) & 0x3f];
-        switch (x) {
-          case '+':
-            to.push_back("%2B");
-            break;
-          case '/':
-            to.push_back("%2F");
-            break;
-          case '=':
-            to.push_back("%3D");
-            break;
-          default:
-            to.push_back(x);
-            break;
-        }
-      } else
-        to.push_back("%3D");
-    }
-  }
-}
-
-template<typename T>
-void string::base64_encode(T &from, string &to, char last)
-{
-}
+//template<typename T>
+//void string::url_encode(T *from, string &to, char last)
+//{
+//  for (auto it = from; *it != last; ++it)
+//    if (inv_under_url_encode(*it))
+//      to.push_char(*it);
+//    else {
+//      T f = (*it & 0xf0) >> 4;
+//      T s = *it & 0x0f;
+//      T ff = (f + 0x30) + 0x07 * (f > 0x09);
+//      T ss = (s + 0x30) + 0x07 * (s > 0x09);
+//      T u[] = {'%', ff, ss, '\0'};
+//      to.push_back(u);
+//    }
+//}
+//
+//template<typename T>
+//void string::url_encode(T &from, string &to, char last)
+//{
+//}
+//
+//template<typename T>
+//void string::base64_encode(T *from, string &to, char last)
+//{
+//  T *it = from;
+//  int ri = 1;
+//  while(*++it != last)
+//    ++ri;
+//  ri = (ri - 1) / 3 + 1;
+//  it = from;
+//  for (int i = 0; i < ri; i++) {
+//    for (int j = 0; j < 4; j++) {
+//      if (ri >= i * 3 + j) {
+//        char x = BASE64_TABLE[((unsigned char)it[j - 1] << (6 - 2 * j) | (unsigned char)it[j] >> (2 * j + 2)) & 0x3f];
+//        switch (x) {
+//          case '+':
+//            to.push_back("%2B");
+//            break;
+//          case '/':
+//            to.push_back("%2F");
+//            break;
+//          case '=':
+//            to.push_back("%3D");
+//            break;
+//          default:
+//            to.push_back(x);
+//            break;
+//        }
+//      } else
+//        to.push_back("%3D");
+//    }
+//  }
+//}
 
 string::iterator::iterator()
   : ptr()

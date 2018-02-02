@@ -6,5 +6,6 @@
 #include "request.h"
 #include "tmap.h"
 #include "tstring.h"
+#include "encoder.h"
 
 #endif

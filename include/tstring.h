@@ -2,6 +2,7 @@
 #define TWITTER_TSTRING_H
 
 #include "constants.h"
+#include "encoder.h"
 #include<cstdio>
 #include<cstring>
 #include<random>
@@ -10,8 +11,6 @@
 
 namespace twitter
 {
-
-class map;
 
 class string
 {
@@ -28,19 +27,15 @@ class string
     string &operator<<(T *str);
     template<typename T>
     string &operator<<(T &str);
+    template<typename T>
+    string &operator<<(const T &str);
     string &operator<<(char c);
     string &operator<<(int n);
     string &operator<<(unsigned int n);
     string &operator<<(long n);
     string &operator<<(unsigned long n);
-    template<typename T>
-    static void encode(EncodeMethod enc, T *from, string &to, char last);
-    template<typename T>
-    static void encode(EncodeMethod enc, T *from, string &to);
-    template<typename T>
-    static void encode(EncodeMethod enc, T &from, string &to, char last);
-    template<typename T>
-    static void encode(EncodeMethod enc, T &from, string &to);
+    template<typename T, template<typename> class F>
+    string &operator<<(F<T> functor);
     class iterator
     {
       public:
@@ -73,17 +68,10 @@ class string
     void push_back(char *str);
     void push_back(const char *str);
     void push_back(string &str);
+    template<typename T, template<typename> class F>
+    void encode(F<T> &functor);
     template<typename T>
     void push_back(T n);
-    static bool inv_under_url_encode(char c);
-    template<typename T>
-    static void url_encode(T *from, string &to, char last);
-    template<typename T>
-    static void url_encode(T &from, string &to, char last);
-    template<typename T>
-    static void base64_encode(T *from, string &to, char last);
-    template<typename T>
-    static void base64_encode(T &from, string &to, char last);
 };
 
 }
