@@ -30,6 +30,30 @@ url_encode<T>::url_encode(T *from)
 }
 
 template<typename T>
+url_encode<T>::url_encode(string &from, char last)
+  : from((T*)from), last(last)
+{
+}
+
+template<typename T>
+url_encode<T>::url_encode(string &from)
+  : from((T*)from), last('\0')
+{
+}
+
+template<typename T>
+url_encode<T>::url_encode(string::iterator &from, char last)
+  : from((T*)from), last(last)
+{
+}
+
+template<typename T>
+url_encode<T>::url_encode(string::iterator &from)
+  : from((T*)from), last('\0')
+{
+}
+
+template<typename T>
 void url_encode<T>::operator()(string &to)
 {
   for (auto it = from; *it != last; ++it) {
@@ -68,18 +92,42 @@ base64_encode<T>::base64_encode(T *from)
 }
 
 template<typename T>
+base64_encode<T>::base64_encode(string &from, char last)
+  : from((T*)from), last(last)
+{
+}
+
+template<typename T>
+base64_encode<T>::base64_encode(string &from)
+  : from((T*)from), last('\0')
+{
+}
+
+template<typename T>
+base64_encode<T>::base64_encode(string::iterator &from, char last)
+  : from((T*)from), last(last)
+{
+}
+
+template<typename T>
+base64_encode<T>::base64_encode(string::iterator &from)
+  : from((T*)from), last('\0')
+{
+}
+
+template<typename T>
 void base64_encode<T>::operator()(string &to)
 {
   T *it = from;
   int ri = 1;
   while(*++it != last)
     ++ri;
-  ri = (ri - 1) / 3 + 1;
+  int rj = (ri - 1) / 3 + 1;
   it = from;
-  for (int i = 0; i < ri; i++) {
-    for (int j = 0; j < 4; j++) {
+  for (int i = 0; i < rj; ++i) {
+    for (int j = 0; j < 4; ++j) {
       if (ri >= i * 3 + j) {
-        char x = BASE64_TABLE[((unsigned char)it[j - 1] << (6 - 2 * j) | (unsigned char)it[j] >> (2 * j + 2)) & 0x3f];
+        char x = BASE64_TABLE[(((unsigned char)(it[j - 1])) << (6 - 2 * j) | ((unsigned char)(it[j])) >> (2 * j + 2)) & 0x3f];
         switch (x) {
           case '+':
             to << "%2B";
@@ -97,6 +145,7 @@ void base64_encode<T>::operator()(string &to)
       } else
         to << "%3D";
     }
+    it += 3;
   }
 }
 

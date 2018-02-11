@@ -2,7 +2,6 @@
 #define TWITTER_TMAP_H
 
 #include "constants.h"
-#include "encoder.h"
 #include "tstring.h"
 #include<map>
 

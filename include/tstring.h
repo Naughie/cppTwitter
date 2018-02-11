@@ -2,7 +2,6 @@
 #define TWITTER_TSTRING_H
 
 #include "constants.h"
-#include "encoder.h"
 #include<cstdio>
 #include<cstring>
 #include<random>
@@ -22,6 +21,8 @@ class string
     iterator begin();
     iterator end();
     size_t size();
+    template<typename T>
+    explicit operator T() const;
     void print();
     template<typename T>
     string &operator<<(T *str);
@@ -43,6 +44,8 @@ class string
         iterator(char *s);
         iterator &operator=(const iterator &that);
         ~iterator();
+        explicit operator char*() const;
+        explicit operator const char*() const;
         template<typename T>
         iterator operator+(T n);
         template<typename T>

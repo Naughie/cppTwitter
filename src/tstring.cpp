@@ -35,6 +35,15 @@ inline size_t string::size()
   return len;
 }
 
+template<typename T>
+string::operator T() const
+{
+  return (T)(this->body);
+}
+
+template string::operator char*() const;
+template string::operator const char*() const;
+
 void string::print()
 {
   for (const auto &it : *this)
@@ -106,6 +115,8 @@ string &string::operator<<(F<T> functor)
 
 template string &string::operator<<<const char, encoder::url_encode>(encoder::url_encode<const char>);
 template string &string::operator<<<const char, encoder::base64_encode>(encoder::base64_encode<const char>);
+template string &string::operator<<<char, encoder::url_encode>(encoder::url_encode<char>);
+template string &string::operator<<<char, encoder::base64_encode>(encoder::base64_encode<char>);
 
 inline void string::push_char(char c)
 {
@@ -150,60 +161,6 @@ void string::push_back(T n)
   len += 20 - i;
 }
 
-//template<typename T>
-//void string::url_encode(T *from, string &to, char last)
-//{
-//  for (auto it = from; *it != last; ++it)
-//    if (inv_under_url_encode(*it))
-//      to.push_char(*it);
-//    else {
-//      T f = (*it & 0xf0) >> 4;
-//      T s = *it & 0x0f;
-//      T ff = (f + 0x30) + 0x07 * (f > 0x09);
-//      T ss = (s + 0x30) + 0x07 * (s > 0x09);
-//      T u[] = {'%', ff, ss, '\0'};
-//      to.push_back(u);
-//    }
-//}
-//
-//template<typename T>
-//void string::url_encode(T &from, string &to, char last)
-//{
-//}
-//
-//template<typename T>
-//void string::base64_encode(T *from, string &to, char last)
-//{
-//  T *it = from;
-//  int ri = 1;
-//  while(*++it != last)
-//    ++ri;
-//  ri = (ri - 1) / 3 + 1;
-//  it = from;
-//  for (int i = 0; i < ri; i++) {
-//    for (int j = 0; j < 4; j++) {
-//      if (ri >= i * 3 + j) {
-//        char x = BASE64_TABLE[((unsigned char)it[j - 1] << (6 - 2 * j) | (unsigned char)it[j] >> (2 * j + 2)) & 0x3f];
-//        switch (x) {
-//          case '+':
-//            to.push_back("%2B");
-//            break;
-//          case '/':
-//            to.push_back("%2F");
-//            break;
-//          case '=':
-//            to.push_back("%3D");
-//            break;
-//          default:
-//            to.push_back(x);
-//            break;
-//        }
-//      } else
-//        to.push_back("%3D");
-//    }
-//  }
-//}
-
 string::iterator::iterator()
   : ptr()
 {
@@ -222,6 +179,16 @@ string::iterator &string::iterator::operator=(const string::iterator &that)
 
 string::iterator::~iterator()
 {
+}
+
+string::iterator::operator char*() const
+{
+  return ptr;
+}
+
+string::iterator::operator const char*() const
+{
+  return (const char*)ptr;
 }
 
 template<typename T>
